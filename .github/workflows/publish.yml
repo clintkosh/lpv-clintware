@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "release-site.tar.gz.base64"
+      - "site-patches/**"
       - ".github/workflows/publish.yml"
   workflow_dispatch:
 
@@ -37,6 +38,20 @@ jobs:
           test -f _site/assets/style.css
           test "$(cat _site/CNAME)" = "lpv.clintware.com"
           test "$(find _site -maxdepth 2 -type f | wc -l)" -eq 13
+          # Assemble independent candidate brand/evidence layers after archive integrity gate.
+          install -m 644 site-patches/brand.css _site/assets/brand.css
+          install -m 644 site-patches/evidence.js _site/assets/evidence.js
+          node --check _site/assets/app.js
+          node --check _site/assets/evidence.js
+          for route in index fit review app application resume messages checks; do
+            sed -i 's|<link rel="stylesheet" href="assets/style.css">|<link rel="stylesheet" href="assets/style.css"><link rel="stylesheet" href="assets/brand.css">|' "_site/$route.html"
+            sed -i 's|<script defer src="assets/app.js"></script>|<script defer src="assets/app.js"></script><script defer src="assets/evidence.js"></script>|' "_site/$route.html"
+            grep -q 'assets/brand.css' "_site/$route.html"
+            grep -q 'assets/evidence.js' "_site/$route.html"
+          done
+          grep -q 'CAREER EVIDENCE' _site/assets/evidence.js
+          grep -q 'WORKING EXAMPLE' _site/assets/evidence.js
+          grep -q 'LOOP VOICE' _site/assets/evidence.js
           if grep -Einr 'hollywood|quillgeist|codefeddy|(^|[^[:alpha:]])(astro|amit|qq)([^[:alpha:]]|$)' _site --include='*.html' --include='*.js' --include='*.css'; then
             echo "Internal-only label detected in publication bundle" >&2
             exit 1
