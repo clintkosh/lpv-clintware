@@ -1,0 +1,66 @@
+name: Publish LPV Application
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "release-site.tar.gz.base64"
+      - ".github/workflows/publish.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: lpv-pages
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify and expand approved release
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf '%s' '1f9bebc0d207891e635e10c9ea5d8151773e73d5bac4d06434f0271a8b6ec02b  release.tar.gz' > /tmp/lpv-sha
+          base64 --decode release-site.tar.gz.base64 > release.tar.gz
+          sha256sum --check /tmp/lpv-sha
+          mkdir _site
+          tar -xzf release.tar.gz -C _site
+          test -f _site/index.html
+          test -f _site/app.html
+          test -f _site/assets/app.js
+          test -f _site/assets/style.css
+          test "$(cat _site/CNAME)" = "lpv.clintware.com"
+          test "$(find _site -maxdepth 2 -type f | wc -l)" -eq 13
+          if grep -Einr 'hollywood|quillgeist|codefeddy|(^|[^[:alpha:]])(astro|amit|qq)([^[:alpha:]]|$)' _site --include='*.html' --include='*.js' --include='*.css'; then
+            echo "Internal-only label detected in publication bundle" >&2
+            exit 1
+          fi
+          for route in index fit review app application resume messages checks; do
+            grep -q 'noindex,nofollow,noarchive' "_site/$route.html"
+          done
+          printf 'LPV_SOURCE_VERIFIED\n'
+      - name: Upload verified static pages
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+
+  deploy:
+    needs: verify
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - name: Deploy static site
+        id: deployment
+        uses: actions/deploy-pages@v4
