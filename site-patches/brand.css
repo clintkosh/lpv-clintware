@@ -118,6 +118,6 @@ a:not(.btn):focus-visible{border-radius:3px}
 .proof-step{color:#84c9ff;font:700 12px var(--mono);letter-spacing:.08em}
 .proof-note{color:#a8c4d6;font-size:13px}
 .proof-standout{font-size:clamp(1.25rem,2.3vw,1.8rem);font-weight:760;line-height:1.2}
-@media(max-width:1050px){.navlinks a{padding:9px 7px}.proof-process{grid-template-columns:repeat(2,minmax(0,1fr)}}
+@media(max-width:1050px){.navlinks a{padding:9px 7px}.proof-process{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:760px){.proof-grid,.proof-profile,.proof-detail,.proof-lane{grid-template-columns:1fr}.proof-process{grid-template-columns:1fr 1fr}.proof-hero{padding:19px}.proof-card{padding:18px}.nav{gap:8px}.wordmark{font-size:14px}.submark{font-size:9px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation-duration:.001ms!important;transition-duration:.001ms!important}}
